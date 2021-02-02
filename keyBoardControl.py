@@ -1,30 +1,46 @@
 from djitellopy import tello
-import pygame
-
-def init():
-    pygame.init()
-    win = pygame.display.set_mode((400, 400))
-
-def getKey(keyName):
-    ans = False
-    for eve in pygame.event.get(): pass
-    keyInput = pygame.key.get_pressed()
-    myKey = getattr(pygame, 'K_{}'.format(keyName))
+import keyBoardControlModule as KCM
+from time import sleep
 
 
-    if keyInput[myKey]:
-        ans = True
-    pygame.display.update()
-    return ans
+KCM.init()
+drone = tello.Tello()
+drone.connect()
+print(drone.get_battery())
 
-def main():
-    #NOTE UPDATE TO WASD KEYS
-    if getKey("LEFT"):
-        print("LEFT KEY PRESSED")
-    if getKey("RIGHT"):
-        print("RIGHT KEY PRESSED")
+def getKeyboardInput():
+    velocity = 50
+    leftRight, forwardBackward, upDown, yawVelocity = 0, 0, 0, 0
 
-if __name__ == '__main__':
-    init()
-    while True:
-        main()
+    if KCM.getKey("LEFT"):
+        leftRight = -velocity
+    elif KCM.getKey("RIGHT"):
+        leftRight = velocity
+
+    if KCM.getKey("UP"):
+        forwardBackward = velocity
+    elif KCM.getKey("DOWN"):
+        forwardBackward = -velocity
+
+    if KCM.getKey("w"):
+        upDown = velocity
+    elif KCM.getKey("s"):
+        upDown = -velocity
+
+    if KCM.getKey("a"):
+        yawVelocity = velocity
+    elif KCM.getKey("d"):
+        yawVelocity = -velocity
+
+    if KCM.getKey("q"):
+        drone.takeoff()
+    if KCM.getKey("e"):
+        drone.land()
+
+    return [leftRight, forwardBackward, upDown, yawVelocity]
+
+while True:
+    vals = getKeyboardInput()
+    drone.send_rc_control(vals[0], vals[1], vals[2], vals[3])
+    # buffer time
+    sleep(0.05)
